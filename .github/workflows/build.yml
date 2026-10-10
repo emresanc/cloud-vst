@@ -52,6 +52,9 @@ jobs:
             cp -R build/Basement_artefacts/Release/AU/Basement.component dist/
           fi
           cp -R build/Basement_artefacts/Release/Standalone/* dist/
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cp scripts/install-mac.sh dist/
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
