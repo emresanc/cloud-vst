@@ -14,7 +14,8 @@ add_library(basement_engine STATIC
     engine/Theory.cpp
     engine/Styles.cpp
     engine/Generator.cpp
-    engine/MidiWriter.cpp)
+    engine/MidiWriter.cpp
+    engine/Chop.cpp)
 target_include_directories(basement_engine PUBLIC engine)
 set_target_properties(basement_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
@@ -45,19 +46,19 @@ if(BASEMENT_BUILD_PLUGIN)
         PRODUCT_NAME "Basement"
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
-        NEEDS_MIDI_OUTPUT TRUE
+        NEEDS_MIDI_OUTPUT FALSE
         IS_MIDI_EFFECT FALSE
         EDITOR_WANTS_KEYBOARD_FOCUS FALSE
         COPY_PLUGIN_AFTER_BUILD FALSE
-        VST3_CATEGORIES Instrument Generator
+        VST3_CATEGORIES Instrument Sampler
         AU_MAIN_TYPE kAudioUnitType_MusicDevice
         FORMATS VST3 AU Standalone)
 
     target_sources(Basement PRIVATE
         plugin/PluginProcessor.cpp
         plugin/PluginEditor.cpp
-        plugin/PianoRoll.cpp
-        plugin/PreviewSynth.cpp)
+        plugin/SampleData.cpp
+        plugin/ChopSampler.cpp)
 
     target_compile_definitions(Basement PUBLIC
         JUCE_WEB_BROWSER=0
@@ -82,7 +83,8 @@ if(BASEMENT_BUILD_PLUGIN AND BASEMENT_BUILD_TESTS)
 endif()
 
 if(BASEMENT_BUILD_PLUGIN AND BASEMENT_BUILD_TESTS)
-    add_executable(basement-render tools/render.cpp plugin/PreviewSynth.cpp)
-    target_link_libraries(basement-render PRIVATE basement_engine juce::juce_audio_formats juce::juce_audio_basics)
-    target_compile_definitions(basement-render PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
+    # Offline chopper: basement-chop <sample> <out-dir> [seed]
+    add_executable(basement-chop tools/chop.cpp plugin/SampleData.cpp plugin/ChopSampler.cpp)
+    target_link_libraries(basement-chop PRIVATE basement_engine juce::juce_audio_formats juce::juce_audio_basics)
+    target_compile_definitions(basement-chop PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1)
 endif()

@@ -1,84 +1,53 @@
-# BASEMENT — Underground Melody Generator
+# BASEMENT — Sample Chopper
 
-US underground rap için melodi, akor ve 808 üreten bir VST3 / AU / Standalone plugin.
-Bir stil seçiyorsun, **GENERATE**'e basıyorsun, beğendiğin loop'u direkt DAW'a sürüklüyorsun.
+Underground rap için sample chop plugin'i (VST3 / AU / Standalone).
+Sample'ı sürükle, **CHOP IT**'e bas, FL'in temposunda çalsın; beğendiğin flip'i WAV olarak playlist'e sürükle.
 
 ![ui](docs/ui.png)
 
+## Nasıl çalışır
+
+1. **Sample yükle:** dalga formu alanına sürükle-bırak ya da **LOAD SAMPLE** (wav, mp3, aiff, flac).
+   Plugin sample'ın kaç bar olduğunu tahmin eder (ekranda "4 bar ~90 bpm" gibi yazar). Yanlışsa **SAMPLE BARS**'ı elle seç.
+2. Sample, **CHOP SIZE**'a göre dilimlenir (1/4, 1/8, 1/16 ya da **Transient** = vuruş noktalarından).
+3. **CHOP IT** stile göre yeni bir chop pattern'i üretir. Pattern birkaç "anchor" chop etrafında döner ve
+   `AABA'` gibi formlarla tekrar eder; o yüzden rastgele dilim yığını değil, hook gibi duyulur.
+4. FL Play'deyken tempoya kilitli çalar. `<` `>` ile seed'ler arasında gez.
+5. **DRAG WAV TO FL** → playlist'e bırak (1 loop, FL temposunda, kusursuz döngü). Ya da **SAVE WAV**.
+
 ## Stiller
 
-| Stil | Karakter | Gam | Tempo |
-|---|---|---|---|
-| **Dark Trap** | Ürkütücü bell/piano, 808'e bol boşluk | Harmonic minor | ~145 |
-| **Memphis Phonk** | Hipnotik 1 bar'lık loop'lar, alçak ve tozlu | Phrygian | ~130 |
-| **Boom Bap** | Dorian m7 akorlar, sample-chop hissi (swing'i aç) | Dorian | ~88 |
-| **Detroit / Flint** | Hızlı, gergin staccato piano koşuları ve stab'lar | Natural minor | ~100 |
-| **Plugg** | Klasik plugg (MexikoDro ekolü): maj7 akorlar, yumuşak seyrek pentatonik lead | Major | ~150 |
-| **Rage** | Synth lead, minor pentatonik, oktav atlamaları | Minor pentatonic | ~160 |
-| **Drill** | Triplet karşı-melodiler, korku filmi harmonic minor | Harmonic minor | ~142 |
-| **Angelic** | Yeni dalga underground (wegonebeok / Nettspend / OsamaSon havası): lydian maj9 loop'lar, tiz hipnotik 1 bar'lık synth'ler | Lydian | ~158 |
-| **Ethereal Sample** | Soluk, sample-flip hissi (fakemink / Lucki havası): dorian m9 loop'lar, uzun puslu notalar — tape + reverb ekle | Dorian | ~150 |
-| **Bells** | Tiz, tekrarlı 16'lık bell riff'leri ve oktav sekmeleri (TRGC'nin Yeat bell'leri gibi) | Minor pentatonic | ~160 |
-| **Vicious** | Karanlık, manik, agresif (Nine Vicious / prod. by patrick havası): pes phrygian riff'ler, yoğun 808 — distortion bas | Phrygian | ~155 |
-| **Slayer** | Ürpertici trap (Zukenee / rayzuu havası): ortaçağ harmonic minor piano, ürkünç m(maj7) akorlar, kayan triplet'ler | Harmonic minor | ~150 |
-| **Nightmare** | Kâbus gibi, dünya dışı (Yeat / sapjer havası): yavaş geniş synth hatları, oktav düşüşleri, karanlık 7'li akorlar | Natural minor | ~150 |
+| Stil | Ne yapar |
+|---|---|
+| **Flip** | Klasik flip: 3-3-2 cepli yeniden dizilmiş cümleler, sample'ın melodisi korunur |
+| **Stutter** | Glitchy jerk / new-wave: stutter, roll, oktav zıplamaları (Chaos'u aç) |
+| **Slowed** | Uzun, puslu, pitch'i düşürülmüş chop'lar (-4 st) |
+| **Bounce** | Boşluklu, ritmik stab'lar — 808 ve hi-hat'e yer bırakır |
+| **Original** | Chop yok: sample sırayla, tempona kilitli. A/B için |
 
 ## Kontroller
 
-- **Style / Key / Scale / Bars / Octave** — Scale'i "Style Default" bırakırsan stilin kendi gamını kullanır.
-- **Density** — nota yoğunluğu. Düşük = boşluklu hook, yüksek = koşu/arp.
-- **Darkness** — gerilim. Yükseldikçe kromatik geçiş notaları artar, akorla çatışan notalar bilerek bırakılır, %66'nın üstünde minor gamların 2. derecesi bemolleşir (phrygian b2 — en "evil" aralık).
-- **Swing** — 16'lıkları kaydırır (boom bap için %30–60 dene).
-- **Humanize** — velocity ve zamanlama oynaması.
-- **Melody / Chords / 808** — katmanları aç/kapat. Birini kapatmak diğerlerini değiştirmez.
-- **Seed `<` `>`** — aynı ayarlarla seed'ler arasında gez; preset gibi. Seed + ayarlar = her zaman aynı melodi, proje kaydında saklanır.
-- **Knob çevirmek melodiyi yeniden üretir ama seed'i korur** — yani Density'yi açınca aynı fikrin daha yoğun hâlini duyarsın.
+- **Pitch** — MPC usulü (hız ile) pitch, ±12 st. Underground için -2 ile -5 arası dene.
+- **Density** — kısa chop'lar ve az boşluk ↔ uzun chop'lar ve nefes.
+- **Chaos** — roll, oktav ve reverse chop olasılığı.
+- **Tone** — low-pass; tozlu/boğuk ses için kıs.
+- **Tempo** — sadece DAW çalmıyorken (Standalone / PLAY butonu) kullanılır.
+- **MIDI** — C1 = chop 1, C#1 = chop 2 ... Klavyeyle/pad'le kendin de çalabilirsin.
 
-## DAW'a aktarma
+Chop'lar arasında kısa crossfade var (MPC'deki mono pad gibi), kesimlerde tık sesi olmaz.
 
-1. **Sürükle-bırak:** Alttaki `DRAG ALL` / `MELODY` / `CHORDS` / `808` kutularını playlist'e ya da piano roll'a sürükle.
-   Dosya adı stil, ton, bpm ve seed'i içerir (`Basement_Rage_Fs_160bpm_4821_Melody.mid`).
-2. **SAVE MIDI:** Tek dosyaya kaydet (her katman ayrı track: Melody / Chords / 808).
-3. **Canlı MIDI out:** Plugin DAW transport'una senkron çalar ve MIDI çıkışı verir
-   (kanal 1 = melodi, 2 = akor, 3 = 808). Kendi synth'ine route edebilirsin.
-   - **FL Studio:** Wrapper → MIDI output port ayarla, synth'in input port'unu aynı yap.
-   - **Ableton:** Yeni MIDI track → "MIDI From: Basement".
-   - **Logic:** Instrument plugin'lerinden MIDI çıkışı almaz — orada sürükle-bırak kullan.
-4. **Sound** açıkken dahili basit bir önizleme synth'i (FM bell + pad + sine 808) çalar. Sadece fikir dinlemek için;
-   gerçek beat'te kendi sesini kullan. **PLAY** butonu DAW'sız (Standalone) önizleme içindir.
+## Kurulum (Mac)
 
-## FL Studio'da test
+1. GitHub'da **Actions** → en üstteki yeşil ✓ build → en altta **Artifacts** → `Basement-macOS` indir.
+2. Terminal:
+   ```bash
+   cd ~/Downloads && unzip -oq Basement-macOS.zip -d Basement-macOS; bash ~/Downloads/Basement-macOS/install-mac.sh
+   ```
+3. FL'i kapatıp aç → **Options → Manage plugins** → "Rescan previously verified plugins" işaretle → **Start scan**.
 
-1. Bu repo'nun GitHub sayfasında **Actions** → en üstteki yeşil ✓ build → aşağıda **Artifacts** → `Basement-Windows` (Mac'te `Basement-macOS`) indir, zip'i aç.
-2. `Basement.vst3` klasörünü kopyala:
-   - Windows: `C:\Program Files\Common Files\VST3\`
-   - Mac: `~/Library/Audio/Plug-Ins/VST3/` (sonra Terminal'de `xattr -cr ~/Library/Audio/Plug-Ins/VST3/Basement.vst3`)
-3. FL: **Options → Manage plugins → Find installed plugins** (Start scan). Basement, **Generators** altında çıkar.
-4. Channel Rack'te **+** → Basement. Pattern modunda Play'e bas: plugin FL'in temposuna ve transport'una senkron çalar,
-   **Sound** açıkken dahili önizleme sesini duyarsın.
-5. Stil seç, **GENERATE** / seed `<` `>` ile gez. Beğendiğinde:
-   - `MELODY` kutusunu kendi synth'inin (Serum, Vital, FLEX...) channel'ına, **piano roll'un üstüne** sürükle → notalar o synth'e gelir.
-   - `808` kutusunu 808 channel'ının piano roll'una, `CHORDS`'u pad/keys channel'ına aynı şekilde.
-   - Ya da `DRAG ALL`'u playlist'e bırak; FL her katmanı ayrı kanal olarak import eder.
-6. **Canlı routing (opsiyonel):** Basement penceresinde sol üstteki dişli → **MIDI output port** = örn. 1.
-   Kendi synth'inde dişli → **MIDI input port** = 1. Sadece melodiyi göndermek için Chords ve 808'i kapat
-   (Basement kanal 1-2-3'ü aynı porttan gönderir). Bu durumda Basement'in **Sound**'unu kapat.
-
-Bir şey ters giderse (ses yok, plugin çıkmadı vs.) ekran görüntüsüyle söyle.
-
-## Kurulum
-
-Her push'ta GitHub Actions macOS (Universal: Apple Silicon + Intel), Windows ve Linux için derler.
-Repo → **Actions** → son başarılı build → **Artifacts** bölümünden `Basement-macOS` / `Basement-Windows` indir.
-
-- **Windows:** `Basement.vst3` klasörünü `C:\Program Files\Common Files\VST3\` içine kopyala.
-- **macOS:** `Basement.vst3` → `~/Library/Audio/Plug-Ins/VST3/`, `Basement.component` → `~/Library/Audio/Plug-Ins/Components/`.
-  Plugin imzasız olduğu için Terminal'de bir kere çalıştır:
-  `xattr -cr ~/Library/Audio/Plug-Ins/VST3/Basement.vst3 ~/Library/Audio/Plug-Ins/Components/Basement.component`
+Windows: `Basement-Windows` içindeki `Basement.vst3`'ü `C:\Program Files\Common Files\VST3\` içine kopyala.
 
 ## Kaynaktan derleme
-
-CMake ≥ 3.22 ve C++17 derleyici yeterli; JUCE otomatik indirilir.
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -86,32 +55,14 @@ cmake --build build --config Release
 ctest --test-dir build -C Release
 ```
 
-DAW'sız hızlı deneme için komut satırı aracı da var:
-
-```bash
-./build/basement-cli --style rage --key F# --bars 8 --seed 42 --darkness 0.8 -o rage.mid
-```
+Komut satırından chop denemek için: `./build/basement-chop sample.wav out/ [seed] [bpm]` her stil için bir WAV üretir.
 
 ## Proje yapısı
 
 ```
-engine/    Melodi motoru — saf C++, JUCE'a bağımlı değil
-  Styles.cpp     Her stilin "DNA"sı: gam, akor yürüyüşleri, ritim olasılıkları, motif formu
-  Generator.cpp  Akor → motif (A/B/A' formları) → melodi → 808 → swing/humanize
-  MidiWriter.cpp .mid yazıcı
-plugin/    JUCE plugin: processor (host senkron MIDI), arayüz, önizleme synth'i
-tools/     basement-cli
-tests/     Motor testleri + gerçek zamanlı MIDI zamanlama testi
+engine/Chop.cpp      Chop pattern motoru (saf C++): stiller, anchor'lar, formlar, roll/reverse/oktav
+plugin/SampleData    Yükleme, bar/BPM tahmini, grid ve transient dilimleme
+plugin/ChopSampler   Tıksız sampler: choke + crossfade, Hermite interpolasyon, host senkron zamanlama
+plugin/PluginEditor  Dalga formu, chop şeridi, sürükle-bırak
+engine/Generator.cpp Önceki MIDI melodi motoru (artık plugin'de değil; basement-cli ile duruyor)
 ```
-
-### Motor nasıl çalışıyor?
-
-1. Stilin akor yürüyüşlerinden biri seçilir, akorlar voice-leading ile dizilir.
-2. 1–2 bar'lık bir **motif** üretilir: ritim, stilin 16'lık olasılık ızgarasından (density ile ölçeklenir);
-   perdeler gam içinde yürüyüşle (tekrar / adım / atlama / oktav), güçlü vuruşlarda akor notalarına çekilerek.
-3. Motif bir **form** ile tekrarlanır (`AABA'`, `ABAB'`, `AAAB`...) — underground beat'lerdeki loop hissi buradan gelir.
-   `A'` = motifin ilk yarısı aynı, ikinci yarısı yeni (call & response).
-4. Tekrarlanan motif yeni akorla çatışırsa düzeltilir (Darkness yüksekse çatışma bilerek bırakılır).
-5. 808 akor köklerini stilin bas ritmiyle çalar; son olarak swing ve humanize uygulanır.
-
-Yeni stil eklemek için `engine/Styles.cpp`'ye bir blok eklemen yeterli.

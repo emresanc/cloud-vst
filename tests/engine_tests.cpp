@@ -1,5 +1,6 @@
 // Dependency-free tests for the melody engine. Run via `ctest` or directly.
 
+#include "Chop.h"
 #include "Generator.h"
 #include "MidiWriter.h"
 
@@ -199,8 +200,52 @@ static void testMidiFile()
     CHECK (chunks == 2);
 }
 
+static void testChops()
+{
+    for (int st = 0; st < numChopStyles(); ++st)
+        for (int bars : { 1, 2, 4, 8 })
+            for (int slices : { 1, 8, 32, 64 })
+                for (uint32_t seed = 1; seed <= 20; ++seed)
+                {
+                    ChopSettings c;
+                    c.style = (ChopStyle) st;
+                    c.bars = bars;
+                    c.numSlices = slices;
+                    c.stepsPerSlice = slices > 32 ? 1 : 2;
+                    c.density = (seed % 5) / 4.0;
+                    c.chaos = (seed % 3) / 2.0;
+                    c.seed = seed;
+                    const auto p = generateChops (c);
+
+                    CHECK (! p.events.empty());
+                    double prevStart = -1;
+                    for (auto& e : p.events)
+                    {
+                        CHECK (e.slice >= 0 && e.slice < slices);
+                        CHECK (e.start >= 0 && e.start < p.lengthBeats());
+                        CHECK (e.length > 0 && e.start + e.length <= p.lengthBeats() + 1e-9);
+                        CHECK (e.start >= prevStart);
+                        CHECK (e.gain > 0 && e.gain <= 1);
+                        prevStart = e.start;
+                    }
+
+                    const auto again = generateChops (c);
+                    CHECK (again.events.size() == p.events.size());
+                }
+
+    // Original plays the slices in order.
+    ChopSettings c;
+    c.style = ChopStyle::Original;
+    c.numSlices = 32;
+    const auto p = generateChops (c);
+    CHECK (p.events.size() == 32);
+    for (size_t i = 0; i < p.events.size(); ++i)
+        CHECK (p.events[i].slice == (int) i);
+}
+
 int main()
 {
+    testChops();
     testTheory();
     testEveryStyle();
     testDeterminismAndVariety();

@@ -1,12 +1,9 @@
 #pragma once
 
-#include "Generator.h"
-#include "PreviewSynth.h"
+#include "ChopSampler.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include <array>
-#include <bitset>
 #include <memory>
 
 class BasementProcessor : public juce::AudioProcessor,
@@ -28,7 +25,7 @@ public:
 
     const juce::String getName() const override { return JucePlugin_Name; }
     bool acceptsMidi() const override { return true; }
-    bool producesMidi() const override { return true; }
+    bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override { return 0.0; }
 
@@ -45,61 +42,58 @@ public:
     // Message-thread API used by the editor.
     juce::AudioProcessorValueTreeState apvts;
 
+    bool loadSample (const juce::File& file, juce::String& error);
+    void setSample (std::shared_ptr<SampleAudio> sample); // also used by tests
+    bool hasSample() const { return uiState != nullptr && uiState->sample != nullptr; }
+
     void randomiseSeed();
     void nudgeSeed (int delta);
     uint32_t getSeed() const { return seed; }
 
-    std::shared_ptr<const basement::Pattern> getPattern() const { return uiPattern; }
-    int getPatternVersion() const { return patternVersion.load(); }
-    basement::Settings currentSettings() const;
+    std::shared_ptr<const ChopState> getState() const { return uiState; }
+    int getStateVersion() const { return stateVersion.load(); }
 
-    // Loop position in beats, or -1 when stopped.
     double getPlayheadBeat() const { return playheadBeat.load(); }
-    double getExportTempo() const;
+    int getLastSlice() const { return lastSlice.load(); }
+    double getTempo() const;
 
     void setInternalPlaying (bool shouldPlay);
     bool isInternalPlaying() const { return internalPlaying.load(); }
-    bool isHostPlaying() const { return hostPlaying.load(); }
 
-    // Writes the current pattern to a temp .mid named after style/key/tempo/seed.
-    juce::File writeMidiToTempFile (int layers) const;
-    juce::String suggestedFileName (int layers) const;
-    juce::MemoryBlock midiData (int layers) const;
+    // Renders one loop of the current chop pattern at the current tempo.
+    juce::File renderToTempFile() const;
+    bool renderToFile (const juce::File& file) const;
+    juce::String suggestedFileName() const;
+
+    static constexpr int firstSliceNote = 36; // C1 plays slice 1 from MIDI
 
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
     void parameterChanged (const juce::String& id, float newValue) override;
     void handleAsyncUpdate() override;
-    void regenerate();
+    void rebuild();
+    void updateTone (double sr);
+    void renderLoop (juce::AudioBuffer<float>& out, double sr, double bpm) const;
 
-    void flushActiveNotes (juce::MidiBuffer& out, int sample);
-    void renderPattern (juce::MidiBuffer& out, double startBeat, double beatsPerSample, int numSamples);
-
+    std::shared_ptr<SampleAudio> sample;
     std::atomic<uint32_t> seed { 1 };
-    std::shared_ptr<const basement::Pattern> uiPattern;
-    std::atomic<int> patternVersion { 0 };
+    std::shared_ptr<const ChopState> uiState;
+    std::atomic<int> stateVersion { 0 };
 
     // Hand-over from the message thread to the audio thread.
-    juce::SpinLock patternLock;
-    std::unique_ptr<basement::Pattern> pendingPattern, playingPattern;
-    bool hasPendingPattern = false;
+    juce::SpinLock stateLock;
+    std::unique_ptr<ChopState> pendingState, playingState;
+    bool hasPendingState = false;
 
     std::atomic<double> playheadBeat { -1.0 }, hostBpm { 0.0 };
-    std::atomic<bool> internalPlaying { false }, hostPlaying { false }, internalRestart { false };
+    std::atomic<int> lastSlice { -1 };
+    std::atomic<bool> internalPlaying { false }, internalRestart { false };
     double internalBeat = 0.0, expectedBeat = 0.0, sampleRate = 44100.0;
     bool wasPlaying = false;
 
-    struct PendingEvent
-    {
-        int sample;
-        bool on;
-        int channel, pitch, velocity;
-    };
-    std::vector<PendingEvent> scratchEvents;
-    std::array<std::bitset<128>, 16> activeNotes;
-    juce::MidiBuffer generatedMidi;
-
-    PreviewSynth previewSynth;
+    ChopSampler sampler;
+    juce::IIRFilter toneFilter[2];
+    float currentTone = -1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BasementProcessor)
 };

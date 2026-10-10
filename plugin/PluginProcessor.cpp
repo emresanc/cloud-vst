@@ -1,37 +1,20 @@
 #include "PluginProcessor.h"
-#include "MidiWriter.h"
 #include "PluginEditor.h"
 
 namespace
 {
 
 const juce::StringArray barChoices { "1", "2", "4", "8" };
-const juce::StringArray octaveChoices { "-2", "-1", "0", "+1", "+2" };
+const juce::StringArray chopChoices { "1/4", "1/8", "1/16", "Transient" };
+const juce::StringArray sampleBarChoices { "Auto", "1", "2", "4", "8", "16" };
 
-const char* const regenerateParams[] = { "style", "key", "scale", "bars", "density", "darkness",
-                                         "swing", "humanize", "octave", "melody", "chords", "bass" };
+const char* const rebuildParams[] = { "style", "bars", "chop", "samplebars", "density", "chaos" };
 
-juce::StringArray styleNames()
+juce::StringArray chopStyleNames()
 {
     juce::StringArray s;
-    for (int i = 0; i < basement::numStyles(); ++i)
-        s.add (basement::getStyle ((basement::StyleId) i).name);
-    return s;
-}
-
-juce::StringArray scaleNames()
-{
-    juce::StringArray s { "Style Default" };
-    for (int i = 0; i < basement::numScales(); ++i)
-        s.add (basement::getScale ((basement::ScaleId) i).name);
-    return s;
-}
-
-juce::StringArray keyNames()
-{
-    juce::StringArray s;
-    for (auto& n : basement::noteNames())
-        s.add (n);
+    for (int i = 0; i < basement::numChopStyles(); ++i)
+        s.add (basement::getChopStyle ((basement::ChopStyle) i).name);
     return s;
 }
 
@@ -41,18 +24,17 @@ BasementProcessor::BasementProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "BasementState", createLayout())
 {
-    for (auto* id : regenerateParams)
+    for (auto* id : rebuildParams)
         apvts.addParameterListener (id, this);
 
     seed = (uint32_t) juce::Random::getSystemRandom().nextInt (1 << 20) + 1;
-    scratchEvents.reserve (4096);
-    regenerate();
+    rebuild();
 }
 
 BasementProcessor::~BasementProcessor()
 {
     cancelPendingUpdate();
-    for (auto* id : regenerateParams)
+    for (auto* id : rebuildParams)
         apvts.removeParameterListener (id, this);
 }
 
@@ -61,96 +43,108 @@ juce::AudioProcessorValueTreeState::ParameterLayout BasementProcessor::createLay
     using namespace juce;
     AudioProcessorValueTreeState::ParameterLayout layout;
 
-    auto pct = AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (juce::roundToInt (v * 100.0f)) + "%"; });
+    auto pct = AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) { return String (roundToInt (v * 100.0f)) + "%"; });
+    auto hz = AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) {
+        return v >= 19999.0f ? String ("Open") : v >= 1000.0f ? String (v / 1000.0f, 1) + "k" : String (roundToInt (v));
+    });
+    auto semis = AudioParameterFloatAttributes().withStringFromValueFunction ([] (float v, int) {
+        const int s = roundToInt (v);
+        return (s > 0 ? "+" : "") + String (s) + " st";
+    });
 
-    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "style", 1 }, "Style", styleNames(), 0));
-    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "key", 1 }, "Key", keyNames(), 0));
-    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "scale", 1 }, "Scale", scaleNames(), 0));
-    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "bars", 1 }, "Bars", barChoices, 2));
-    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "octave", 1 }, "Octave", octaveChoices, 2));
-    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "density", 1 }, "Density", NormalisableRange<float> (0.0f, 1.0f), 0.5f, pct));
-    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "darkness", 1 }, "Darkness", NormalisableRange<float> (0.0f, 1.0f), 0.5f, pct));
-    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "swing", 1 }, "Swing", NormalisableRange<float> (0.0f, 1.0f), 0.0f, pct));
-    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "humanize", 1 }, "Humanize", NormalisableRange<float> (0.0f, 1.0f), 0.3f, pct));
-    layout.add (std::make_unique<AudioParameterBool> (ParameterID { "melody", 1 }, "Melody", true));
-    layout.add (std::make_unique<AudioParameterBool> (ParameterID { "chords", 1 }, "Chords", true));
-    layout.add (std::make_unique<AudioParameterBool> (ParameterID { "bass", 1 }, "808", true));
-    layout.add (std::make_unique<AudioParameterBool> (ParameterID { "sound", 1 }, "Preview Sound", true));
-    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "tempo", 1 }, "Preview Tempo",
+    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "style", 2 }, "Chop Style", chopStyleNames(), 0));
+    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "bars", 2 }, "Pattern Bars", barChoices, 2));
+    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "chop", 2 }, "Chop Size", chopChoices, 1));
+    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { "samplebars", 2 }, "Sample Bars", sampleBarChoices, 0));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "pitch", 2 }, "Pitch", NormalisableRange<float> (-12.0f, 12.0f, 1.0f), 0.0f, semis));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "density", 2 }, "Density", NormalisableRange<float> (0.0f, 1.0f), 0.5f, pct));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "chaos", 2 }, "Chaos", NormalisableRange<float> (0.0f, 1.0f), 0.3f, pct));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "tone", 2 }, "Tone", NormalisableRange<float> (300.0f, 20000.0f, 0.0f, 0.3f), 20000.0f, hz));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "tempo", 2 }, "Preview Tempo",
                                                        NormalisableRange<float> (60.0f, 200.0f, 1.0f), 140.0f,
                                                        AudioParameterFloatAttributes().withLabel ("bpm")));
-    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "volume", 1 }, "Preview Volume", NormalisableRange<float> (0.0f, 1.0f), 0.7f, pct));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { "volume", 2 }, "Volume", NormalisableRange<float> (0.0f, 1.0f), 0.8f, pct));
 
     return layout;
 }
 
-basement::Settings BasementProcessor::currentSettings() const
+//==============================================================================
+bool BasementProcessor::loadSample (const juce::File& file, juce::String& error)
+{
+    auto s = loadSampleFile (file, error);
+    if (s == nullptr)
+        return false;
+    setSample (s);
+    return true;
+}
+
+void BasementProcessor::setSample (std::shared_ptr<SampleAudio> s)
+{
+    sample = std::move (s);
+    rebuild();
+}
+
+void BasementProcessor::rebuild()
 {
     auto choice = [this] (const char* id) { return juce::roundToInt (apvts.getRawParameterValue (id)->load()); };
     auto value = [this] (const char* id) { return (double) apvts.getRawParameterValue (id)->load(); };
-    auto flag = [this] (const char* id) { return apvts.getRawParameterValue (id)->load() > 0.5f; };
 
-    basement::Settings s;
-    s.style = (basement::StyleId) choice ("style");
-    s.rootPc = choice ("key");
-    s.scaleOverride = choice ("scale") - 1;
-    s.bars = barChoices[choice ("bars")].getIntValue();
-    s.octaveShift = choice ("octave") - 2;
-    s.density = value ("density");
-    s.darkness = value ("darkness");
-    s.swing = value ("swing");
-    s.humanize = value ("humanize");
-    s.melody = flag ("melody");
-    s.chords = flag ("chords");
-    s.bass = flag ("bass");
-    s.seed = seed;
-    return s;
-}
+    auto state = std::make_shared<ChopState>();
+    state->sample = sample;
 
-void BasementProcessor::regenerate()
-{
-    auto pattern = std::make_shared<basement::Pattern> (basement::generate (currentSettings()));
-    auto forAudio = std::make_unique<basement::Pattern> (*pattern);
-
-    std::unique_ptr<basement::Pattern> old; // freed here, never on the audio thread
+    if (sample != nullptr)
     {
-        const juce::SpinLock::ScopedLockType lock (patternLock);
-        old = std::move (pendingPattern);
-        pendingPattern = std::move (forAudio);
-        hasPendingPattern = true;
+        const int sampleBarsIdx = choice ("samplebars");
+        state->slices = sliceSample (*sample, sampleBarsIdx == 0 ? 0 : sampleBarChoices[sampleBarsIdx].getIntValue(),
+                                     (ChopSize) choice ("chop"));
+
+        basement::ChopSettings cs;
+        cs.style = (basement::ChopStyle) choice ("style");
+        cs.bars = barChoices[choice ("bars")].getIntValue();
+        cs.numSlices = state->slices.numSlices();
+        cs.stepsPerSlice = state->slices.stepsPerSlice;
+        cs.density = value ("density");
+        cs.chaos = value ("chaos");
+        cs.seed = seed;
+        state->pattern = basement::generateChops (cs);
     }
 
-    uiPattern = pattern;
-    ++patternVersion;
+    auto forAudio = std::make_unique<ChopState> (*state);
+    std::unique_ptr<ChopState> old; // freed here, never on the audio thread
+    {
+        const juce::SpinLock::ScopedLockType lock (stateLock);
+        old = std::move (pendingState);
+        pendingState = std::move (forAudio);
+        hasPendingState = true;
+    }
+
+    uiState = state;
+    ++stateVersion;
 }
 
 void BasementProcessor::randomiseSeed()
 {
     seed = (uint32_t) juce::Random::getSystemRandom().nextInt (1 << 20) + 1;
-    regenerate();
+    rebuild();
 }
 
 void BasementProcessor::nudgeSeed (int delta)
 {
     seed = (uint32_t) juce::jmax (1, (int) seed.load() + delta);
-    regenerate();
+    rebuild();
 }
 
-void BasementProcessor::parameterChanged (const juce::String&, float)
-{
-    // May arrive from the audio thread (automation); regenerate on the message thread.
-    triggerAsyncUpdate();
-}
-
-void BasementProcessor::handleAsyncUpdate() { regenerate(); }
+void BasementProcessor::parameterChanged (const juce::String&, float) { triggerAsyncUpdate(); }
+void BasementProcessor::handleAsyncUpdate() { rebuild(); }
 
 //==============================================================================
 void BasementProcessor::prepareToPlay (double sr, int)
 {
     sampleRate = sr;
-    previewSynth.prepare (sr);
-    for (auto& ch : activeNotes)
-        ch.reset();
+    sampler.prepare (sr);
+    currentTone = -1.0f;
+    for (auto& f : toneFilter)
+        f.reset();
     wasPlaying = false;
 }
 
@@ -167,85 +161,35 @@ void BasementProcessor::setInternalPlaying (bool shouldPlay)
     internalPlaying = shouldPlay;
 }
 
-void BasementProcessor::flushActiveNotes (juce::MidiBuffer& out, int sample)
+void BasementProcessor::updateTone (double sr)
 {
-    for (int ch = 0; ch < 16; ++ch)
-    {
-        if (activeNotes[(size_t) ch].none())
-            continue;
-        for (int p = 0; p < 128; ++p)
-            if (activeNotes[(size_t) ch][(size_t) p])
-                out.addEvent (juce::MidiMessage::noteOff (ch + 1, p), sample);
-        activeNotes[(size_t) ch].reset();
-    }
-}
-
-void BasementProcessor::renderPattern (juce::MidiBuffer& out, double startBeat, double beatsPerSample, int numSamples)
-{
-    const auto& p = *playingPattern;
-    const double loop = p.lengthBeats();
-    const double endBeat = startBeat + numSamples * beatsPerSample;
-
-    scratchEvents.clear();
-
-    auto schedule = [&] (double t, bool on, const basement::Note& n) {
-        double occ = t + std::ceil ((startBeat - t) / loop) * loop;
-        for (; occ < endBeat; occ += loop)
-        {
-            if (scratchEvents.size() == scratchEvents.capacity())
-                return;
-            const int s = juce::jlimit (0, numSamples - 1, (int) ((occ - startBeat) / beatsPerSample));
-            scratchEvents.push_back ({ s, on, n.channel, n.pitch, n.velocity });
-        }
-    };
-
-    for (auto& n : p.notes)
-    {
-        schedule (n.start, true, n);
-        schedule (n.start + n.length, false, n);
-    }
-
-    std::sort (scratchEvents.begin(), scratchEvents.end(), [] (const PendingEvent& a, const PendingEvent& b) {
-        return a.sample != b.sample ? a.sample < b.sample : (! a.on && b.on);
-    });
-
-    for (auto& e : scratchEvents)
-    {
-        auto& active = activeNotes[(size_t) (e.channel - 1)];
-        if (e.on)
-        {
-            if (active[(size_t) e.pitch])
-                out.addEvent (juce::MidiMessage::noteOff (e.channel, e.pitch), e.sample);
-            out.addEvent (juce::MidiMessage::noteOn (e.channel, e.pitch, (juce::uint8) e.velocity), e.sample);
-            active[(size_t) e.pitch] = true;
-        }
-        else if (active[(size_t) e.pitch])
-        {
-            out.addEvent (juce::MidiMessage::noteOff (e.channel, e.pitch), e.sample);
-            active[(size_t) e.pitch] = false;
-        }
-    }
+    const float tone = apvts.getRawParameterValue ("tone")->load();
+    if (std::abs (tone - currentTone) < 1.0f)
+        return;
+    currentTone = tone;
+    const auto coeffs = juce::IIRCoefficients::makeLowPass (sr, juce::jmin ((double) tone, sr * 0.45), 0.8);
+    for (auto& f : toneFilter)
+        f.setCoefficients (coeffs);
 }
 
 void BasementProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
     buffer.clear();
-    generatedMidi.clear();
-
     const int numSamples = buffer.getNumSamples();
 
     {
-        const juce::SpinLock::ScopedTryLockType lock (patternLock);
-        if (lock.isLocked() && hasPendingPattern)
+        const juce::SpinLock::ScopedTryLockType lock (stateLock);
+        if (lock.isLocked() && hasPendingState)
         {
-            std::swap (pendingPattern, playingPattern);
-            hasPendingPattern = false;
-            flushActiveNotes (generatedMidi, 0);
+            std::swap (pendingState, playingState);
+            hasPendingState = false;
         }
     }
 
-    // Transport: follow the host when it is playing, otherwise the internal clock.
+    if (playingState == nullptr)
+        return;
+
     double bpm = apvts.getRawParameterValue ("tempo")->load();
     bool playing = false;
     double startBeat = 0.0;
@@ -259,18 +203,14 @@ void BasementProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
                 bpm = *b;
                 hostBpm = *b;
             }
-
             if (pos->getIsPlaying())
-            {
                 if (auto ppq = pos->getPpqPosition())
                 {
                     playing = true;
                     startBeat = *ppq;
                 }
-            }
         }
     }
-    hostPlaying = playing;
 
     if (! playing && internalPlaying)
     {
@@ -281,78 +221,169 @@ void BasementProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Mi
     }
 
     const double beatsPerSample = juce::jmax (1.0, bpm) / 60.0 / sampleRate;
+    const float pitch = apvts.getRawParameterValue ("pitch")->load();
+    const auto& state = *playingState;
 
-    if (playing && playingPattern != nullptr)
+    if (playing && ! wasPlaying)
+        sampler.releaseAll();
+    if (! playing && wasPlaying)
+        sampler.releaseAll();
+
+    // MIDI: C1 and up play the slices directly, split the block at each event.
+    int pos = 0;
+    for (const auto m : midi)
     {
-        if (! wasPlaying || std::abs (startBeat - expectedBeat) > 0.01)
-            flushActiveNotes (generatedMidi, 0); // started or jumped
+        const auto msg = m.getMessage();
+        const int at = juce::jlimit (0, numSamples, m.samplePosition);
 
-        renderPattern (generatedMidi, startBeat, beatsPerSample, numSamples);
+        if (at > pos)
+        {
+            if (playing)
+            {
+                const int s = sampler.processPattern (buffer, pos, at - pos, startBeat + pos * beatsPerSample, beatsPerSample, state, pitch);
+                if (s >= 0)
+                    lastSlice = s;
+            }
+            else
+                sampler.render (buffer, pos, at - pos, state);
+            pos = at;
+        }
 
+        if (msg.isNoteOn() && msg.getNoteNumber() >= firstSliceNote)
+        {
+            const int slice = msg.getNoteNumber() - firstSliceNote;
+            if (slice < state.slices.numSlices())
+            {
+                sampler.triggerManual (state, slice, pitch, msg.getFloatVelocity(), msg.getNoteNumber());
+                lastSlice = slice;
+            }
+        }
+        else if (msg.isNoteOff())
+            sampler.releaseNote (msg.getNoteNumber());
+    }
+
+    if (pos < numSamples)
+    {
+        if (playing)
+        {
+            const int s = sampler.processPattern (buffer, pos, numSamples - pos, startBeat + pos * beatsPerSample, beatsPerSample, state, pitch);
+            if (s >= 0)
+                lastSlice = s;
+        }
+        else
+            sampler.render (buffer, pos, numSamples - pos, state);
+    }
+
+    if (playing)
+    {
+        if (wasPlaying && std::abs (startBeat - expectedBeat) > 0.01)
+            sampler.releaseAll(); // jumped
         expectedBeat = startBeat + numSamples * beatsPerSample;
         internalBeat = expectedBeat;
-        const double loop = playingPattern->lengthBeats();
+        const double loop = state.pattern.lengthBeats();
         playheadBeat = startBeat - std::floor (startBeat / loop) * loop;
     }
     else
     {
-        if (wasPlaying)
-            flushActiveNotes (generatedMidi, 0);
         playheadBeat = -1.0;
     }
     wasPlaying = playing;
+    midi.clear();
 
-    // Pass incoming MIDI through alongside the generated notes.
-    generatedMidi.addEvents (midi, 0, numSamples, 0);
-    midi.swapWith (generatedMidi);
+    updateTone (sampleRate);
+    if (currentTone < 19999.0f)
+        for (int ch = 0; ch < juce::jmin (2, buffer.getNumChannels()); ++ch)
+            toneFilter[ch].processSamples (buffer.getWritePointer (ch), numSamples);
 
-    if (apvts.getRawParameterValue ("sound")->load() > 0.5f)
-    {
-        previewSynth.render (buffer, midi);
-        buffer.applyGain (apvts.getRawParameterValue ("volume")->load());
-    }
-    else
-    {
-        previewSynth.allNotesOff();
-    }
+    buffer.applyGain (apvts.getRawParameterValue ("volume")->load());
 }
 
 //==============================================================================
-double BasementProcessor::getExportTempo() const
+double BasementProcessor::getTempo() const
 {
     const double host = hostBpm.load();
     return host > 0 ? host : (double) apvts.getRawParameterValue ("tempo")->load();
 }
 
-juce::String BasementProcessor::suggestedFileName (int layers) const
+void BasementProcessor::renderLoop (juce::AudioBuffer<float>& out, double sr, double bpm) const
 {
-    const auto s = currentSettings();
-    juce::String layer = "Full";
-    if (layers == basement::LayerMelody)
-        layer = "Melody";
-    else if (layers == basement::LayerChords)
-        layer = "Chords";
-    else if (layers == basement::LayerBass)
-        layer = "808";
+    auto state = uiState;
+    const double loop = state->pattern.lengthBeats();
+    const int total = (int) std::ceil (loop * 60.0 / bpm * sr);
+    out.setSize (2, total);
+    out.clear();
+    if (state->sample == nullptr)
+        return;
 
-    const auto style = juce::String (basement::getStyle (s.style).name).removeCharacters (" /");
-    return "Basement_" + style + "_" + juce::String (basement::noteName (s.rootPc)).replace ("#", "s") + "_"
-           + juce::String (juce::roundToInt (getExportTempo())) + "bpm_" + juce::String (s.seed) + "_" + layer + ".mid";
+    // Play the loop twice and keep the second pass, so chops that ring over
+    // the loop point are already sounding at the start (seamless loop).
+    ChopSampler offline;
+    offline.prepare (sr);
+    juce::AudioBuffer<float> scratch (2, 512);
+    const double bps = bpm / 60.0 / sr;
+    const float pitch = apvts.getRawParameterValue ("pitch")->load();
+
+    for (int pass = 0; pass < 2; ++pass)
+        for (int done = 0; done < total;)
+        {
+            const int n = juce::jmin (512, total - done);
+            scratch.clear();
+            offline.processPattern (scratch, 0, n, (pass * total + done) * bps, bps, *state, pitch);
+            if (pass == 1)
+                for (int ch = 0; ch < 2; ++ch)
+                    out.copyFrom (ch, done, scratch, ch, 0, n);
+            done += n;
+        }
+
+    const float tone = apvts.getRawParameterValue ("tone")->load();
+    if (tone < 19999.0f)
+    {
+        juce::IIRFilter f[2];
+        for (int ch = 0; ch < 2; ++ch)
+        {
+            f[ch].setCoefficients (juce::IIRCoefficients::makeLowPass (sr, juce::jmin ((double) tone, sr * 0.45), 0.8));
+            f[ch].processSamples (out.getWritePointer (ch), total);
+        }
+    }
+
+    const float mag = out.getMagnitude (0, total);
+    if (mag > 0.98f)
+        out.applyGain (0.98f / mag);
 }
 
-juce::MemoryBlock BasementProcessor::midiData (int layers) const
+juce::String BasementProcessor::suggestedFileName() const
 {
-    const auto bytes = basement::writeMidiFile (*uiPattern, getExportTempo(), layers);
-    return juce::MemoryBlock (bytes.data(), bytes.size());
+    auto state = uiState;
+    const auto style = juce::String (basement::getChopStyle ((basement::ChopStyle) juce::roundToInt (apvts.getRawParameterValue ("style")->load())).name);
+    const auto name = state->sample != nullptr ? state->sample->name.retainCharacters ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-").substring (0, 24) : juce::String ("chop");
+    return "Basement_" + name + "_" + style + "_" + juce::String (juce::roundToInt (getTempo())) + "bpm_" + juce::String (seed.load()) + ".wav";
 }
 
-juce::File BasementProcessor::writeMidiToTempFile (int layers) const
+bool BasementProcessor::renderToFile (const juce::File& file) const
+{
+    juce::AudioBuffer<float> audio;
+    const double sr = 44100.0;
+    renderLoop (audio, sr, getTempo());
+
+    file.deleteFile();
+    juce::WavAudioFormat wav;
+    auto stream = file.createOutputStream();
+    if (stream == nullptr)
+        return false;
+
+    std::unique_ptr<juce::AudioFormatWriter> writer (wav.createWriterFor (stream.get(), sr, 2, 24, {}, 0));
+    if (writer == nullptr)
+        return false;
+    stream.release();
+    return writer->writeFromAudioSampleBuffer (audio, 0, audio.getNumSamples());
+}
+
+juce::File BasementProcessor::renderToTempFile() const
 {
     auto dir = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("Basement");
     dir.createDirectory();
-    auto file = dir.getChildFile (suggestedFileName (layers));
-    const auto data = midiData (layers);
-    file.replaceWithData (data.getData(), data.getSize());
+    auto file = dir.getChildFile (suggestedFileName());
+    renderToFile (file);
     return file;
 }
 
@@ -361,6 +392,7 @@ void BasementProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = apvts.copyState();
     state.setProperty ("seed", (int) seed.load(), nullptr);
+    state.setProperty ("samplePath", sample != nullptr ? sample->file.getFullPathName() : juce::String(), nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
 }
@@ -369,13 +401,22 @@ void BasementProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary (data, sizeInBytes))
     {
-        if (xml->hasTagName (apvts.state.getType()))
+        if (! xml->hasTagName (apvts.state.getType()))
+            return;
+
+        auto state = juce::ValueTree::fromXml (*xml);
+        seed = (uint32_t) juce::jmax (1, (int) state.getProperty ("seed", 1));
+        apvts.replaceState (state);
+
+        const auto path = state.getProperty ("samplePath").toString();
+        if (juce::File::isAbsolutePath (path) && juce::File (path).existsAsFile())
         {
-            auto state = juce::ValueTree::fromXml (*xml);
-            seed = (uint32_t) juce::jmax (1, (int) state.getProperty ("seed", 1));
-            apvts.replaceState (state);
-            triggerAsyncUpdate();
+            juce::String error;
+            if (auto s = loadSampleFile (juce::File (path), error))
+                sample = s;
         }
+
+        triggerAsyncUpdate();
     }
 }
 

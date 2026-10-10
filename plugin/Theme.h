@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Generator.h"
-
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace theme
@@ -13,17 +11,12 @@ inline const juce::Colour grid { 0xff24242c };
 inline const juce::Colour text { 0xffe8e6e3 };
 inline const juce::Colour textDim { 0xff8a8790 };
 inline const juce::Colour accent { 0xffe0303c };   // blood red
-inline const juce::Colour chords { 0xff7b5cd6 };   // bruise purple
-inline const juce::Colour bass { 0xffe08a2c };     // rust orange
 
-inline juce::Colour layerColour (int channel)
+// Distinct, muted colours so the same chop is recognisable in the waveform and the pattern.
+inline juce::Colour sliceColour (int slice)
 {
-    switch (channel)
-    {
-        case basement::MelodyChannel: return accent;
-        case basement::ChordChannel:  return chords;
-        default:                      return bass;
-    }
+    const float hue = std::fmod (0.97f + 0.13f * (float) slice, 1.0f);
+    return juce::Colour::fromHSV (hue, 0.55f, 0.85f, 1.0f);
 }
 
 class LookAndFeel : public juce::LookAndFeel_V4
