@@ -45,6 +45,9 @@ static void testTheory()
     CHECK (chordName (5, { 0, 4, 7, 11 }) == "Fmaj7");
     CHECK (chordName (2, { 0, 3, 6 }) == "Ddim");
     CHECK (chordName (9, { 0, 3, 7, 10 }) == "Am7");
+    CHECK (chordName (0, { 0, 4, 7, 11, 14 }) == "Cmaj9");
+    CHECK (chordName (2, { 0, 3, 7, 10, 14 }) == "Dm9");
+    CHECK (chordName (4, { 0, 3, 7, 10, 13 }) == "Em7(b9)");
     CHECK (degreeToSemitone (getScale (ScaleId::NaturalMinor).steps, -1) == -2);
     CHECK (degreeToSemitone (getScale (ScaleId::NaturalMinor).steps, 9) == 15);
     CHECK (midiNoteName (60) == "C4");

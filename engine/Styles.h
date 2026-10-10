@@ -18,6 +18,9 @@ enum class StyleId
     Plugg,
     Rage,
     Drill,
+    Angelic,
+    Ethereal,
+    YeatBells,
     Count
 };
 
@@ -34,6 +37,7 @@ struct StyleDef
     std::vector<int> melodyDegrees;              // scale degrees (0..6) the melody may land on
     std::vector<std::vector<int>> progressions;  // chord roots as scale degrees
     bool sevenths;
+    bool ninths = false;                         // add the 9th on top (needs sevenths)
     bool chordStabs;                             // short rhythmic chord hits instead of pads
 
     // Rhythm (16th-note grid, onset probability at density 0.5)

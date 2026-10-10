@@ -13,9 +13,12 @@ Bir stil seçiyorsun, **GENERATE**'e basıyorsun, beğendiğin loop'u direkt DAW
 | **Memphis Phonk** | Hipnotik 1 bar'lık loop'lar, alçak ve tozlu | Phrygian | ~130 |
 | **Boom Bap** | Dorian m7 akorlar, sample-chop hissi (swing'i aç) | Dorian | ~88 |
 | **Detroit / Flint** | Hızlı, gergin staccato piano koşuları ve stab'lar | Natural minor | ~100 |
-| **Plugg** | Rüya gibi maj7 akorlar, seyrek pentatonik bell'ler | Major | ~150 |
+| **Plugg** | Klasik plugg (MexikoDro ekolü): maj7 akorlar, yumuşak seyrek pentatonik lead | Major | ~150 |
 | **Rage** | Synth lead, minor pentatonik, oktav atlamaları | Minor pentatonic | ~160 |
 | **Drill** | Triplet karşı-melodiler, korku filmi harmonic minor | Harmonic minor | ~142 |
+| **Angelic** | Yeni dalga underground (wegonebeok / Nettspend / OsamaSon havası): lydian maj9 loop'lar, tiz hipnotik 1 bar'lık synth'ler | Lydian | ~158 |
+| **Ethereal Sample** | Soluk, sample-flip hissi (fakemink / Lucki havası): dorian m9 loop'lar, uzun puslu notalar — tape + reverb ekle | Dorian | ~150 |
+| **Bells** | Tiz, tekrarlı 16'lık bell riff'leri ve oktav sekmeleri (TRGC'nin Yeat bell'leri gibi) | Minor pentatonic | ~160 |
 
 ## Kontroller
 
@@ -40,6 +43,25 @@ Bir stil seçiyorsun, **GENERATE**'e basıyorsun, beğendiğin loop'u direkt DAW
    - **Logic:** Instrument plugin'lerinden MIDI çıkışı almaz — orada sürükle-bırak kullan.
 4. **Sound** açıkken dahili basit bir önizleme synth'i (FM bell + pad + sine 808) çalar. Sadece fikir dinlemek için;
    gerçek beat'te kendi sesini kullan. **PLAY** butonu DAW'sız (Standalone) önizleme içindir.
+
+## FL Studio'da test
+
+1. Bu repo'nun GitHub sayfasında **Actions** → en üstteki yeşil ✓ build → aşağıda **Artifacts** → `Basement-Windows` (Mac'te `Basement-macOS`) indir, zip'i aç.
+2. `Basement.vst3` klasörünü kopyala:
+   - Windows: `C:\Program Files\Common Files\VST3\`
+   - Mac: `~/Library/Audio/Plug-Ins/VST3/` (sonra Terminal'de `xattr -cr ~/Library/Audio/Plug-Ins/VST3/Basement.vst3`)
+3. FL: **Options → Manage plugins → Find installed plugins** (Start scan). Basement, **Generators** altında çıkar.
+4. Channel Rack'te **+** → Basement. Pattern modunda Play'e bas: plugin FL'in temposuna ve transport'una senkron çalar,
+   **Sound** açıkken dahili önizleme sesini duyarsın.
+5. Stil seç, **GENERATE** / seed `<` `>` ile gez. Beğendiğinde:
+   - `MELODY` kutusunu kendi synth'inin (Serum, Vital, FLEX...) channel'ına, **piano roll'un üstüne** sürükle → notalar o synth'e gelir.
+   - `808` kutusunu 808 channel'ının piano roll'una, `CHORDS`'u pad/keys channel'ına aynı şekilde.
+   - Ya da `DRAG ALL`'u playlist'e bırak; FL her katmanı ayrı kanal olarak import eder.
+6. **Canlı routing (opsiyonel):** Basement penceresinde sol üstteki dişli → **MIDI output port** = örn. 1.
+   Kendi synth'inde dişli → **MIDI input port** = 1. Sadece melodiyi göndermek için Chords ve 808'i kapat
+   (Basement kanal 1-2-3'ü aynı porttan gönderir). Bu durumda Basement'in **Sound**'unu kapat.
+
+Bir şey ters giderse (ses yok, plugin çıkmadı vs.) ekran görüntüsüyle söyle.
 
 ## Kurulum
 

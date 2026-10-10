@@ -13,6 +13,7 @@ static const ScaleDef scales[] = {
     { "Dorian", { 0, 2, 3, 5, 7, 9, 10 } },
     { "Phrygian Dominant", { 0, 1, 4, 5, 7, 8, 10 } },
     { "Major", { 0, 2, 4, 5, 7, 9, 11 } },
+    { "Lydian", { 0, 2, 4, 6, 7, 9, 11 } },
 };
 
 static_assert (sizeof (scales) / sizeof (scales[0]) == (size_t) ScaleId::Count, "scale table mismatch");
@@ -42,6 +43,7 @@ std::string chordName (int rootPc, const std::vector<int>& intervals)
     const bool min7 = has (10), maj7 = has (11), dim7 = has (9) && dim5 && minor3;
     const bool hasSeventh = intervals.size() >= 4;
 
+    const bool hasNinth = intervals.size() >= 5;
     std::string q;
 
     if (minor3 && dim5)
@@ -70,6 +72,15 @@ std::string chordName (int rootPc, const std::vector<int>& intervals)
     else
     {
         q = "5";
+    }
+
+    if (hasNinth)
+    {
+        if (has (13))        q += "(b9)";
+        else if (q == "maj7") q = "maj9";
+        else if (q == "m7")  q = "m9";
+        else if (q == "7")   q = "9";
+        else                 q += "(9)";
     }
 
     return noteName (rootPc) + q;

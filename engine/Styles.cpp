@@ -122,7 +122,7 @@ static std::vector<StyleDef> buildStyles()
     {
         StyleDef d;
         d.name = "Plugg";
-        d.description = "Dreamy major-7th chords and sparse, floaty pentatonic bells.";
+        d.description = "Classic plugg: dreamy major-7th chords, soft sparse pentatonic leads.";
         d.defaultTempo = 150;
         d.scale = ScaleId::Major;
         d.melodyDegrees = { 0, 1, 2, 4, 5 }; // major pentatonic
@@ -199,6 +199,89 @@ static std::vector<StyleDef> buildStyles()
         s.push_back (d);
     }
 
+    // --- Angelic / Jerk: lydian maj9 loops, high hypnotic synths ---------------
+    {
+        StyleDef d;
+        d.name = "Angelic";
+        d.description = "Angelic new-wave underground: lydian maj9 loops, high hypnotic 1-bar synths.";
+        d.defaultTempo = 158;
+        d.scale = ScaleId::Lydian;
+        d.melodyDegrees = { 0, 1, 2, 3, 4, 5, 6 };
+        d.progressions = { { 0, 1, 0, 1 }, { 0, 0, 1, 1 }, { 5, 1, 0, 0 }, { 0, 4, 5, 1 } };
+        d.sevenths = true;
+        d.ninths = true;
+        d.chordStabs = false;
+        d.rhythm = { 0.95, 0.20, 0.60, 0.30, 0.75, 0.20, 0.60, 0.35, 0.90, 0.20, 0.60, 0.30, 0.70, 0.30, 0.65, 0.40 };
+        d.tripletChance = 0.05;
+        d.legato = 0.85;
+        d.maxNoteBeats = 1.0;
+        d.bassRhythm = { 1.0, 0, 0, 0.5, 0, 0, 0.5, 0, 0, 0, 0.6, 0, 0.3, 0, 0.3, 0 };
+        d.motifBars = 1;
+        d.forms = { "AAAA'", "AA'AA'", "AAAB" };
+        d.repeatProb = 0.22; d.stepProb = 0.45; d.leapProb = 0.20; d.octaveProb = 0.13;
+        d.chordToneBias = 0.6;
+        d.chromaticity = 0.0;
+        d.melodyCenter = 76;
+        d.rangeLow = -2; d.rangeHigh = 8;
+        d.bassOctaveJumpChance = 0.15;
+        s.push_back (d);
+    }
+
+    // --- Ethereal sample: washed-out dorian m9 loops, long notes ---------------
+    {
+        StyleDef d;
+        d.name = "Ethereal Sample";
+        d.description = "Washed-out sample-flip feel: dorian m9 loops, long hazy notes. Add tape + reverb.";
+        d.defaultTempo = 150;
+        d.scale = ScaleId::Dorian;
+        d.melodyDegrees = { 0, 1, 2, 3, 4, 5, 6 };
+        d.progressions = { { 0, 3, 0, 3 }, { 0, 6, 0, 6 }, { 2, 3, 0, 0 }, { 0, 0, 6, 3 } };
+        d.sevenths = true;
+        d.ninths = true;
+        d.chordStabs = false;
+        d.rhythm = { 0.90, 0.0, 0.10, 0.15, 0.40, 0.0, 0.20, 0.05, 0.60, 0.0, 0.15, 0.20, 0.30, 0.0, 0.25, 0.05 };
+        d.tripletChance = 0.08;
+        d.legato = 1.0;
+        d.maxNoteBeats = 3.0;
+        d.bassRhythm = { 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.4, 0, 0, 0, 0, 0 };
+        d.motifBars = 2;
+        d.forms = { "AABA'", "AA'AA''", "ABAB'" };
+        d.repeatProb = 0.20; d.stepProb = 0.60; d.leapProb = 0.18; d.octaveProb = 0.02;
+        d.chordToneBias = 0.75;
+        d.chromaticity = 0.1;
+        d.melodyCenter = 70;
+        d.rangeLow = -3; d.rangeHigh = 8;
+        d.bassOctaveJumpChance = 0.05;
+        s.push_back (d);
+    }
+
+    // --- Bells: high repetitive 16th bell riffs, octave bounces ----------------
+    {
+        StyleDef d;
+        d.name = "Bells";
+        d.description = "High, repetitive 16th bell riffs with octave bounces. Short and percussive.";
+        d.defaultTempo = 160;
+        d.scale = ScaleId::NaturalMinor;
+        d.melodyDegrees = { 0, 2, 3, 4, 6 }; // minor pentatonic
+        d.progressions = { { 0, 0, 5, 5 }, { 0, 5, 2, 6 }, { 5, 6, 0, 0 }, { 0, 6, 0, 6 } };
+        d.sevenths = false;
+        d.chordStabs = false;
+        d.rhythm = { 0.95, 0.50, 0.75, 0.50, 0.85, 0.50, 0.75, 0.55, 0.95, 0.50, 0.75, 0.50, 0.85, 0.55, 0.75, 0.60 };
+        d.tripletChance = 0.02;
+        d.legato = 0.5;
+        d.maxNoteBeats = 0.5;
+        d.bassRhythm = { 1.0, 0, 0, 0.6, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.3, 0, 0.3, 0 };
+        d.motifBars = 1;
+        d.forms = { "AAAA'", "AAAB", "AA'AA'" };
+        d.repeatProb = 0.35; d.stepProb = 0.30; d.leapProb = 0.15; d.octaveProb = 0.20;
+        d.chordToneBias = 0.55;
+        d.chromaticity = 0.0;
+        d.melodyCenter = 80;
+        d.rangeLow = -2; d.rangeHigh = 7;
+        d.bassOctaveJumpChance = 0.15;
+        s.push_back (d);
+    }
+
     return s;
 }
 
@@ -236,6 +319,9 @@ StyleId parseStyle (const std::string& name, bool& ok)
         { "detroit", StyleId::DetroitFlint }, { "flint", StyleId::DetroitFlint },
         { "plugg", StyleId::Plugg },       { "pluggnb", StyleId::Plugg },
         { "rage", StyleId::Rage },         { "drill", StyleId::Drill },
+        { "angelic", StyleId::Angelic },   { "jerk", StyleId::Angelic },
+        { "ethereal", StyleId::Ethereal }, { "sample", StyleId::Ethereal },
+        { "bells", StyleId::YeatBells },   { "bell", StyleId::YeatBells },
     };
 
     for (auto& a : aliases)

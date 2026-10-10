@@ -17,6 +17,7 @@ enum class ScaleId
     Dorian,
     PhrygianDominant,
     Major,
+    Lydian,
     Count
 };
 

@@ -145,6 +145,8 @@ private:
         std::vector<int> d { root, root + 2, root + 4 };
         if (style.sevenths)
             d.push_back (root + 6);
+        if (style.sevenths && style.ninths)
+            d.push_back (root + 8);
         return d;
     }
 
@@ -243,7 +245,7 @@ private:
     bool isChordTone (int degree, const ChordSlot& c) const
     {
         const int rel = wrap (degree - c.degree, 7);
-        return rel == 0 || rel == 2 || rel == 4 || (style.sevenths && rel == 6);
+        return rel == 0 || rel == 2 || rel == 4 || (style.sevenths && rel == 6) || (style.ninths && rel == 1);
     }
 
     bool inRange (int d) const { return d >= style.rangeLow && d <= style.rangeHigh; }
