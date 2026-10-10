@@ -21,6 +21,9 @@ enum class StyleId
     Angelic,
     Ethereal,
     YeatBells,
+    Vicious,
+    Slayer,
+    Nightmare,
     Count
 };
 

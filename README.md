@@ -19,6 +19,9 @@ Bir stil seçiyorsun, **GENERATE**'e basıyorsun, beğendiğin loop'u direkt DAW
 | **Angelic** | Yeni dalga underground (wegonebeok / Nettspend / OsamaSon havası): lydian maj9 loop'lar, tiz hipnotik 1 bar'lık synth'ler | Lydian | ~158 |
 | **Ethereal Sample** | Soluk, sample-flip hissi (fakemink / Lucki havası): dorian m9 loop'lar, uzun puslu notalar — tape + reverb ekle | Dorian | ~150 |
 | **Bells** | Tiz, tekrarlı 16'lık bell riff'leri ve oktav sekmeleri (TRGC'nin Yeat bell'leri gibi) | Minor pentatonic | ~160 |
+| **Vicious** | Karanlık, manik, agresif (Nine Vicious / prod. by patrick havası): pes phrygian riff'ler, yoğun 808 — distortion bas | Phrygian | ~155 |
+| **Slayer** | Ürpertici trap (Zukenee / rayzuu havası): ortaçağ harmonic minor piano, ürkünç m(maj7) akorlar, kayan triplet'ler | Harmonic minor | ~150 |
+| **Nightmare** | Kâbus gibi, dünya dışı (Yeat / sapjer havası): yavaş geniş synth hatları, oktav düşüşleri, karanlık 7'li akorlar | Natural minor | ~150 |
 
 ## Kontroller
 

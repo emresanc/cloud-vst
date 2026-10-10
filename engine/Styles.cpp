@@ -282,6 +282,87 @@ static std::vector<StyleDef> buildStyles()
         s.push_back (d);
     }
 
+    // --- Vicious: dark, manic, aggressive phrygian riffs -----------------------
+    {
+        StyleDef d;
+        d.name = "Vicious";
+        d.description = "Dark, manic and aggressive: low phrygian riffs on 8ths, busy 808. Distort it.";
+        d.defaultTempo = 155;
+        d.scale = ScaleId::Phrygian;
+        d.melodyDegrees = { 0, 1, 2, 4, 5 }; // 1 b2 b3 5 b6: the evil notes only
+        d.progressions = { { 0, 1, 0, 0 }, { 0, 5, 1, 0 }, { 0, 0, 5, 1 }, { 0, 1, 5, 1 } };
+        d.sevenths = false;
+        d.chordStabs = false;
+        d.rhythm = { 0.95, 0.20, 0.80, 0.30, 0.90, 0.20, 0.80, 0.40, 0.95, 0.20, 0.80, 0.30, 0.90, 0.30, 0.80, 0.45 };
+        d.tripletChance = 0.04;
+        d.legato = 0.65;
+        d.maxNoteBeats = 0.75;
+        d.bassRhythm = { 1.0, 0, 0, 0.6, 0, 0, 0.7, 0, 0.4, 0, 0.6, 0, 0.3, 0, 0.6, 0.3 };
+        d.motifBars = 1;
+        d.forms = { "AAAA'", "AAAB", "AA'AA'" };
+        d.repeatProb = 0.35; d.stepProb = 0.40; d.leapProb = 0.15; d.octaveProb = 0.10;
+        d.chordToneBias = 0.6;
+        d.chromaticity = 0.3;
+        d.melodyCenter = 62;
+        d.rangeLow = -2; d.rangeHigh = 7;
+        d.bassOctaveJumpChance = 0.25;
+        s.push_back (d);
+    }
+
+    // --- Slayer: spine-chilling harmonic-minor piano, sliding triplets ---------
+    {
+        StyleDef d;
+        d.name = "Slayer";
+        d.description = "Spine-chilling trap: medieval harmonic-minor piano, eerie m(maj7) chords, sliding triplets.";
+        d.defaultTempo = 150;
+        d.scale = ScaleId::HarmonicMinor;
+        d.melodyDegrees = { 0, 1, 2, 3, 4, 5, 6 };
+        d.progressions = { { 0, 5, 4, 0 }, { 0, 3, 4, 4 }, { 0, 5, 1, 4 }, { 0, 0, 5, 4 } };
+        d.sevenths = true;
+        d.chordStabs = false;
+        d.rhythm = { 0.90, 0.05, 0.30, 0.50, 0.40, 0.10, 0.55, 0.15, 0.75, 0.05, 0.30, 0.50, 0.35, 0.15, 0.50, 0.20 };
+        d.tripletChance = 0.18;
+        d.legato = 0.9;
+        d.maxNoteBeats = 1.5;
+        d.bassRhythm = { 1.0, 0, 0, 0.3, 0, 0, 0.5, 0, 0.2, 0, 0.5, 0, 0, 0, 0.3, 0 };
+        d.motifBars = 2;
+        d.forms = { "AABA'", "ABAB'", "AA'AA''" };
+        d.repeatProb = 0.12; d.stepProb = 0.58; d.leapProb = 0.25; d.octaveProb = 0.05;
+        d.chordToneBias = 0.7;
+        d.chromaticity = 0.35;
+        d.melodyCenter = 70;
+        d.rangeLow = -3; d.rangeHigh = 9;
+        d.bassOctaveJumpChance = 0.1;
+        s.push_back (d);
+    }
+
+    // --- Nightmare: unearthly, slow huge synth lines over dark 7ths ------------
+    {
+        StyleDef d;
+        d.name = "Nightmare";
+        d.description = "Nightmarish, unearthly: slow wide synth lines and octave drops over dark 7ths.";
+        d.defaultTempo = 150;
+        d.scale = ScaleId::NaturalMinor;
+        d.melodyDegrees = { 0, 1, 2, 3, 4, 5, 6 };
+        d.progressions = { { 0, 5, 0, 5 }, { 0, 3, 5, 4 }, { 5, 3, 0, 0 }, { 0, 6, 5, 5 } };
+        d.sevenths = true;
+        d.chordStabs = false;
+        d.rhythm = { 0.90, 0.0, 0.10, 0.20, 0.35, 0.0, 0.25, 0.05, 0.65, 0.0, 0.15, 0.25, 0.30, 0.0, 0.30, 0.05 };
+        d.tripletChance = 0.06;
+        d.legato = 1.0;
+        d.maxNoteBeats = 2.5;
+        d.bassRhythm = { 1.0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.2, 0 };
+        d.motifBars = 2;
+        d.forms = { "AABA'", "AA'AA''", "AAAB" };
+        d.repeatProb = 0.15; d.stepProb = 0.45; d.leapProb = 0.25; d.octaveProb = 0.15;
+        d.chordToneBias = 0.75;
+        d.chromaticity = 0.2;
+        d.melodyCenter = 72;
+        d.rangeLow = -4; d.rangeHigh = 8;
+        d.bassOctaveJumpChance = 0.05;
+        s.push_back (d);
+    }
+
     return s;
 }
 
@@ -322,6 +403,8 @@ StyleId parseStyle (const std::string& name, bool& ok)
         { "angelic", StyleId::Angelic },   { "jerk", StyleId::Angelic },
         { "ethereal", StyleId::Ethereal }, { "sample", StyleId::Ethereal },
         { "bells", StyleId::YeatBells },   { "bell", StyleId::YeatBells },
+        { "vicious", StyleId::Vicious },   { "slayer", StyleId::Slayer },
+        { "nightmare", StyleId::Nightmare },
     };
 
     for (auto& a : aliases)
